@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="My Cards">
+<meta name="theme-color" content="#1a1a2e">
+<title>My Card Benefits</title>
+<style>
+  :root {
+    --bg: #0f0f1a;
+    --surface: #1a1a2e;
+    --card-bg: #1e1e32;
+    --border: rgba(255,255,255,0.08);
+    --text: #f0f0f5;
+    --muted: #8888aa;
+    --accent: #7c6ff7;
+    --accent-light: rgba(124,111,247,0.15);
+    --green: #22c55e;
+    --green-light: rgba(34,197,94,0.12);
+    --amber: #f59e0b;
+    --amber-light: rgba(245,158,11,0.12);
+    --pink: #ec4899;
+    --pink-light: rgba(236,72,153,0.12);
+    --teal: #14b8a6;
+    --teal-light: rgba(20,184,166,0.12);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 14px;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* Header */
+  .app-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 16px 16px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .app-header h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
+  .app-header p { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  /* Search */
+  .search-wrap { padding: 12px 16px 0; }
+  .search-wrap input {
+    width: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+  }
+  .search-wrap input::placeholder { color: var(--muted); }
+  .search-wrap input:focus { border-color: var(--accent); }
+
+  /* Filter pills */
+  .filters {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+  .pill {
+    flex-shrink: 0;
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .pill.active { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+
+  /* Card list */
+  .card-list { padding: 0 16px; display: flex; flex-direction: column; gap: 10px; }
+
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .card.open { border-color: rgba(255,255,255,0.15); }
+
+  .card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .card-emoji {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .card-info { flex: 1; min-width: 0; }
+  .card-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .card-bank { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .card-badges { display: flex; gap: 5px; margin-top: 5px; flex-wrap: wrap; }
+  .badge {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 5px;
+    letter-spacing: 0.2px;
+  }
+  .badge-cc { background: var(--green-light); color: var(--green); }
+  .badge-dc { background: var(--accent-light); color: var(--accent); }
+  .badge-star { background: var(--amber-light); color: var(--amber); }
+
+  .chevron {
+    color: var(--muted);
+    font-size: 18px;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .card.open .chevron { transform: rotate(180deg); }
+
+  /* Card body */
+  .card-body { display: none; padding: 0 14px 14px; }
+  .card.open .card-body { display: block; }
+
+  .tagline {
+    font-size: 11px;
+    color: var(--accent);
+    font-style: italic;
+    margin-bottom: 12px;
+    padding-top: 4px;
+    border-top: 1px solid var(--border);
+    padding-top: 10px;
+  }
+  .section { margin-bottom: 12px; }
+  .section-title {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 6px;
+  }
+  .benefit {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+    align-items: flex-start;
+  }
+  .dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  .benefit-text { font-size: 12px; color: #cccce0; line-height: 1.6; }
+  .benefit-text strong { color: var(--text); font-weight: 600; }
+  .note {
+    margin-top: 10px;
+    padding: 8px 10px;
+    background: rgba(255,255,255,0.04);
+    border-left: 3px solid;
+    border-radius: 0 6px 6px 0;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  /* Tag chips */
+  .tags { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 10px; }
+  .tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+  }
+
+  /* Empty state */
+  .empty { text-align: center; padding: 48px 16px; color: var(--muted); font-size: 13px; }
+
+  /* Quick tip footer */
+  .quick-tips {
+    margin: 16px 16px 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+  }
+  .quick-tips h3 { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
+  .tip-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
+  .tip-emoji { font-size: 14px; flex-shrink: 0; }
+  .tip-text { font-size: 12px; color: #cccce0; }
+  .tip-text strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>💳 My Card Benefits</h1>
+  <p>8 credit cards · 3 debit cards</p>
+</div>
+
+<div class="search-wrap">
+  <input type="text" id="searchInput" placeholder="Search card, bank, or benefit..." oninput="render()">
+</div>
+
+<div class="filters">
+  <button class="pill active" onclick="setFilter('all',this)">All</button>
+  <button class="pill" onclick="setFilter('cc',this)">Credit cards</button>
+  <button class="pill" onclick="setFilter('dc',this)">Debit cards</button>
+  <button class="pill" onclick="setFilter('cashback',this)">💰 Cashback</button>
+  <button class="pill" onclick="setFilter('fuel',this)">⛽ Fuel</button>
+  <button class="pill" onclick="setFilter('lounge',this)">🛋️ Lounge</button>
+  <button class="pill" onclick="setFilter('upi',this)">📲 UPI</button>
+  <button class="pill" onclick="setFilter('insurance',this)">🛡️ Insurance</button>
+</div>
+
+<div class="card-list" id="cardList"></div>
+
+<div class="quick-tips" id="tips">
+  <h3>Quick pick guide</h3>
+  <div class="tip-row"><div class="tip-emoji">🛍️</div><div class="tip-text">Shopping on Flipkart/Myntra → <strong>Axis Flipkart CC</strong></div></div>
+  <div class="tip-row"><div class="tip-emoji">⛽</div><div class="tip-text">Filling fuel at IOCL → <strong>SBI IndianOil DC</strong></div></div>
+  <div class="tip-row"><div class="tip-emoji">🎬</div><div class="tip-text">Movie tickets → <strong>Axis MyZone CC</strong> (BOGO monthly)</div></div>
+  <div class="tip-row"><div class="tip-emoji">🛒</div><div class="tip-text">Grocery & departmental store → <strong>SBI SimplySAVE CC</strong> (10x RP)</div></div>
+  <div class="tip-row"><div class="tip-emoji">🍽️</div><div class="tip-text">Dining at restaurants → <strong>Axis Privilege Amex CC</strong> or <strong>SBI SimplySAVE CC</strong></div></div>
+  <div class="tip-row"><div class="tip-emoji">📱</div><div class="tip-text">UPI scan & pay with credit → <strong>CRED RuPay CC</strong> or <strong>HDFC Pixel RuPay</strong></div></div>
+  <div class="tip-row"><div class="tip-emoji">🎉</div><div class="tip-text">Weekend food/shopping → <strong>Axis Liberty DC</strong> (5% cashback)</div></div>
+  <div class="tip-row"><div class="tip-emoji">✈️</div><div class="tip-text">Airport lounge → <strong>Axis Privilege Amex CC</strong> (2/quarter)</div></div>
+</div>
+
+<script>
+const CARDS = [
+  {
+    id:1, type:"cc", bank:"Axis Bank", name:"Flipkart Mastercard CC",
+    emoji:"🛍️", emojiColor:"#1e2d4a", dot:"#378ADD", star:"5% Flipkart",
+    tags:["cashback","online","shopping"],
+    topline:"Best for Flipkart, Myntra & Cleartrip shopping",
+    sections:[
+      {title:"Cashback rates",items:[
+        "<strong>7.5%</strong> on Myntra (max ₹4,000/quarter)",
+        "<strong>5%</strong> on Flipkart & Cleartrip (max ₹4,000/quarter)",
+        "<strong>4%</strong> on Swiggy, Uber, PVR, cult.fit (unlimited)",
+        "<strong>1%</strong> on all other spends"
+      ]},
+      {title:"Other perks",items:[
+        "15% off (max ₹500) at 10,000+ restaurants — Dining Delights",
+        "1% fuel surcharge waiver on ₹400–₹4,000 txns",
+        "EMI on txns above ₹2,500"
+      ]},
+      {title:"Lounge",items:["❌ Discontinued from June 2025"]}
+    ],
+    note:"Fee: ₹500/yr · Waived on ₹3.5L annual spend"
+  },
+  {
+    id:2, type:"cc", bank:"Axis Bank", name:"Privilege Amex CC",
+    emoji:"✈️", emojiColor:"#1a2e1a", dot:"#22c55e", star:"Unlimited RP",
+    tags:["rewards","lounge","dining"],
+    topline:"Best for milestone rewards, dining & lounge access",
+    sections:[
+      {title:"Reward points",items:[
+        "<strong>10 EDGE RP</strong> per ₹200 on all spends — no cap",
+        "<strong>Milestone:</strong> 10,000 RP (₹2,000 value) on ₹2.5L annual spend",
+        "1 RP = ₹0.20 (up to ₹0.40 on multi-brand vouchers at milestone)"
+      ]},
+      {title:"Lounge access",items:[
+        "<strong>2 visits/quarter</strong> (8/year) at domestic airports",
+        "Spend ₹50K in previous 3 months required"
+      ]},
+      {title:"Other perks",items:[
+        "BOGO movie — District app, code AXISPRIVILEGE, max ₹250/month",
+        "15% off (max ₹500) at partner restaurants — Dining Delights",
+        "1% fuel surcharge waiver on ₹400–₹4,000 txns",
+        "Purchase protection up to ₹1 lakh"
+      ]}
+    ],
+    note:"Fee: ₹1,500/yr · Amex variant often LTF · Welcome: 12,500 RP on first txn"
+  },
+  {
+    id:3, type:"cc", bank:"Axis Bank", name:"MyZone Visa CC",
+    emoji:"🎬", emojiColor:"#2e2010", dot:"#f59e0b", star:"BOGO Movies",
+    tags:["entertainment","rewards","lounge","dining"],
+    topline:"Best for movies, Swiggy discounts & everyday rewards",
+    sections:[
+      {title:"Reward points",items:[
+        "<strong>4 EDGE RP</strong> per ₹200 on most spends",
+        "<strong>1,000 RP</strong> milestone on ₹1.5L annual spend (Apr 2025 onwards)"
+      ]},
+      {title:"Entertainment & food",items:[
+        "BOGO movie — District app, code AXIS200, max ₹200/month",
+        "<strong>Swiggy:</strong> ₹120 off on ₹500+ orders, twice a month",
+        "SonyLiv membership (₹999) on first spend within 30 days"
+      ]},
+      {title:"Lounge & fuel",items:[
+        "<strong>1 visit/quarter</strong> — requires ₹50K spend in previous 3 months",
+        "1% fuel surcharge waiver on ₹400–₹4,000 txns"
+      ]},
+      {title:"Shopping",items:["Up to ₹1,000 off on AJIO (min spend ₹2,999)"]}
+    ],
+    note:"Fee: ₹500/yr · Dining Delights: 15% off at partner restaurants"
+  },
+  {
+    id:4, type:"cc", bank:"IndusInd Bank", name:"CRED RuPay CC",
+    emoji:"💳", emojiColor:"#2e1a22", dot:"#ec4899", star:"5% E-comm",
+    tags:["cashback","upi","online"],
+    topline:"Best for e-commerce & CRED ecosystem spends via UPI",
+    sections:[
+      {title:"CRED points (1 pt = ₹1)",items:[
+        "<strong>5 pts/₹100</strong> on all e-commerce sites (max 5,000 pts/month)",
+        "<strong>5 pts/₹100</strong> on CRED Pay, CRED Store, CRED Travel, CRED UPI",
+        "<strong>1 pt/₹100</strong> on utilities & insurance via CRED",
+        "<strong>1 pt/₹100</strong> on UPI Scan & Pay (max 500 pts/month)"
+      ]},
+      {title:"Redemption",items:[
+        "Flights & hotels via CRED — best value at ~5%",
+        "500+ CRED Pay merchants · CRED Store products"
+      ]},
+      {title:"Other perks",items:[
+        "1% fuel surcharge waiver on ₹500–₹5,000 txns (max ₹300/cycle)",
+        "IndusInd Total Protect — insurance = your full credit limit",
+        "1.8% forex markup (lower than most cards)"
+      ]}
+    ],
+    note:"Zero joining fee · ₹499+GST annual fee from year 2 · No lounge access"
+  },
+  {
+    id:5, type:"cc", bank:"HDFC Bank", name:"Pixel Play (Visa + RuPay CC)",
+    emoji:"🎨", emojiColor:"#0f2e20", dot:"#14b8a6", star:"5% custom packs",
+    tags:["cashback","upi","online","customizable"],
+    topline:"Best customizable cashback card — pick your own categories",
+    sections:[
+      {title:"Cashback (1 CashPoint = ₹1)",items:[
+        "<strong>5%</strong> on 2 chosen packs — Dining & Entertainment (Zomato/BookMyShow), Travel (MakeMyTrip/Uber), Grocery (Blinkit/Reliance), Electronics (Croma/Reliance Digital), Fashion (Nykaa/Myntra) — max 500 pts/month each",
+        "<strong>3%</strong> on 1 chosen e-comm — Amazon, Flipkart, or PayZapp — max 500 pts/month",
+        "<strong>1%</strong> on UPI spends (RuPay variant only) — max 500 pts/month",
+        "<strong>1% unlimited</strong> on all other spends"
+      ]},
+      {title:"Redemption",items:[
+        "Min 1,000 pts required · Use via PayZapp wallet for brand vouchers & recharges",
+        "Points valid 2 years from accumulation"
+      ]},
+      {title:"Other perks",items:[
+        "Choose card design, billing cycle & cashback categories in PayZapp app",
+        "1% fuel surcharge waiver on ₹400–₹5,000 txns",
+        "5% cashback on HDFC SmartBuy portal"
+      ]}
+    ],
+    note:"Fee: ₹500/yr · Waived on ₹20K in first 90 days or ₹1L annually · No lounge"
+  },
+  {
+    id:6, type:"cc", bank:"Slice (Small Finance Bank)", name:"Slice RuPay CC & DC",
+    emoji:"✂️", emojiColor:"#222222", dot:"#888", star:"UPI credit",
+    tags:["upi","cashback"],
+    topline:"Best for UPI-first credit spending & BNPL split payments",
+    sections:[
+      {title:"Cashback (Monies — 1M = ₹1)",items:[
+        "<strong>Up to 3%</strong> cashback (varies by activity & spending tier)",
+        "<strong>1% base</strong> on card swipes, Tap & Pay, in-app UPI"
+      ]},
+      {title:"Key features",items:[
+        "'Slice in 3' — split any purchase into 3 equal instalments",
+        "RuPay UPI — scan & pay at any QR with your credit card",
+        "Instant virtual card · Credit limit ₹2,000–₹10 lakh"
+      ]},
+      {title:"Exclusions (no cashback)",items:["Fuel, insurance, rent, education, wallet loads"]}
+    ],
+    note:"Zero joining & annual fee · DC linked to Slice SFB savings account · Good for credit building"
+  },
+  {
+    id:7, type:"cc", bank:"SBI Card", name:"Unnati Visa CC",
+    emoji:"🏦", emojiColor:"#0f2010", dot:"#22c55e", star:"FD-backed",
+    tags:["starter","fuel"],
+    topline:"Best FD-backed starter credit card — zero fee for 4 years",
+    sections:[
+      {title:"Rewards",items:[
+        "<strong>1 RP per ₹100</strong> on eligible spends",
+        "<strong>₹500 cashback</strong> on ₹50,000 annual spend milestone",
+        "Redeem via SBI Rewards catalogue (rewardz.sbi)"
+      ]},
+      {title:"Fuel & features",items:[
+        "1% fuel surcharge waiver on ₹500–₹3,000 txns",
+        "24M+ merchant outlets worldwide · Contactless payments",
+        "FlexiPay EMI on txns above ₹2,500",
+        "Add-on cards for family (age 18+)"
+      ]}
+    ],
+    note:"Zero fee first 4 years · ₹499 from year 5 · Requires SBI FD of ₹25,000 · No lounge"
+  },
+  {
+    id:8, type:"dc", bank:"SBI", name:"IndianOil Visa DC",
+    emoji:"⛽", emojiColor:"#2e1e0a", dot:"#f59e0b", star:"6x at IOCL",
+    tags:["fuel","debit","rewards"],
+    topline:"Best debit card for IOCL fuel savings & reward points",
+    sections:[
+      {title:"Reward points (1 RP = ₹0.25)",items:[
+        "<strong>6 RP per ₹200</strong> at all IOCL fuel stations (4 partner + 2 normal pts)",
+        "<strong>2 RP per ₹200</strong> on all other POS & e-commerce spends",
+        "<strong>IOCL loyalty:</strong> 0.75% value back as fuel loyalty points on fuel",
+        "Max 10,000 RP/month · Cap ₹1,000 per transaction"
+      ]},
+      {title:"Bonus points",items:[
+        "Activation: <strong>300 RP</strong> on first 3 txns (min ₹2,000 each) within 2 months",
+        "Birthday month: <strong>2x RP</strong> on all transactions",
+        "Milestone: <strong>1,000 RP</strong> if previous year POS+ecom ≥ ₹1 lakh"
+      ]},
+      {title:"Redemption (via SBI Rewardz app / rewardz.sbi)",items:[
+        "Vouchers, merchandise, e-vouchers",
+        "Movie tickets on BookMyShow",
+        "Flights, buses & hotels"
+      ]},
+      {title:"Card features",items:[
+        "Contactless tap & pay up to ₹5,000/txn",
+        "Visa network — wide domestic & international acceptance",
+        "5 year card validity · EMV chip + PIN"
+      ]}
+    ],
+    note:"⚠️ Partner IOCL points (4 of 6) sometimes need manual follow-up with SBI — check SBI Rewardz within 30 days of each fuel txn. Global: ₹40K ATM/day, ₹75K purchase/day"
+  },
+  {
+    id:9, type:"dc", bank:"Canara Bank", name:"Platinum Mastercard DC",
+    emoji:"🏛️", emojiColor:"#1a1230", dot:"#7c6ff7", star:"10yr validity",
+    tags:["debit","insurance"],
+    topline:"Premium debit card with insurance cover & long validity",
+    sections:[
+      {title:"Transaction limits",items:[
+        "<strong>₹50,000/day</strong> ATM limit (Canara Bank ATMs)",
+        "<strong>₹2 lakh/day</strong> purchase limit (POS + online)",
+        "₹10,000/txn at other bank ATMs · <strong>10 year</strong> card validity"
+      ]},
+      {title:"Insurance & protection",items:[
+        "Life insurance up to ₹4 lakh (RuPay Platinum variant)",
+        "Purchase protection up to ₹25,000",
+        "Visa GCAS — emergency card assistance anywhere in the world"
+      ]},
+      {title:"Lifestyle",items:[
+        "Up to 25% off at partner dining restaurants",
+        "Lounge access (select variants)",
+        "International usage — enable at branch or via internet banking"
+      ]}
+    ],
+    note:"Free first year · ₹100/yr from year 2 · EMV chip + PIN · RuPay variant has stronger insurance"
+  },
+  {
+    id:11, type:"cc", bank:"SBI Card", name:"SimplySAVE Credit Card",
+    emoji:"🛒", emojiColor:"#0f2010", dot:"#22c55e", star:"10x on daily spends",
+    tags:["rewards","cashback","fuel","dining"],
+    topline:"Best for everyday offline spending — groceries, dining & movies",
+    sections:[
+      {title:"Reward points (4 RP = ₹1)",items:[
+        "<strong>10 RP per ₹150</strong> on Dining, Movies, Grocery & Departmental stores (~1.7% value back)",
+        "<strong>1 RP per ₹150</strong> on all other eligible spends (~0.17% value back)",
+        "No upper cap on reward points earned"
+      ]},
+      {title:"Welcome benefit",items:[
+        "<strong>2,000 bonus RP</strong> (worth ₹500) on spending ₹2,000 within first 60 days — effectively covers joining fee"
+      ]},
+      {title:"Fuel",items:[
+        "1% fuel surcharge waiver on ₹500–₹3,000 txns at any petrol pump",
+        "Max waiver ₹100 per statement cycle"
+      ]},
+      {title:"Other features",items:[
+        "Annual fee waiver from year 2 on ₹1 lakh annual spend",
+        "FlexiPay EMI on txns above ₹2,500",
+        "2 free add-on cards for family (age 18+)",
+        "Balance transfer at lower interest rates",
+        "RuPay variant available — UPI-linked credit payments",
+        "Wide acceptance at 24M+ merchants worldwide"
+      ]},
+      {title:"Redemption options",items:[
+        "Pay outstanding card bill (4 RP = ₹1)",
+        "Brand vouchers — Amazon Prime, Shoppers Stop, Westside, Yatra etc.",
+        "Catalogue: travel, lifestyle, dining, health, kids, luxury",
+        "⚠️ Redemption fee applies per request — redeem in bulk to minimize"
+      ]}
+    ],
+    note:"Fee: ₹499/yr joining + renewal · Waived on ₹1L spend from year 2 · No lounge access · Forex markup: 3.5%"
+  },
+  {
+    id:10, type:"dc", bank:"Axis Bank", name:"Liberty Visa DC",
+    emoji:"🎉", emojiColor:"#2e101e", dot:"#ec4899", star:"5% weekends",
+    tags:["cashback","debit","lounge","insurance"],
+    topline:"Best debit card for weekend cashback + highest insurance cover",
+    sections:[
+      {title:"Weekend cashback (Sat–Sun only)",items:[
+        "<strong>5%</strong> on Food, Entertainment, Shopping & Travel",
+        "Max <strong>₹500/month</strong> · <strong>₹1,000</strong> in birthday month",
+        "<strong>₹750 voucher</strong>/quarter on ₹60,000 quarterly spend — Amazon, Ola, Croma etc."
+      ]},
+      {title:"Lounge & rewards",items:[
+        "<strong>1 visit/quarter</strong> at select domestic airports (salary account holders)",
+        "Requires ₹5,000 spend in previous 3 months",
+        "1 EDGE RP per ₹200 on domestic & international spends"
+      ]},
+      {title:"Insurance",items:[
+        "Air accident cover — <strong>₹1 crore</strong>",
+        "Personal accident cover — <strong>₹5 lakh</strong>",
+        "Purchase & price protection — ₹50,000 each",
+        "Lost/delayed baggage — up to USD 500"
+      ]},
+      {title:"Limits",items:[
+        "₹50,000/day ATM · ₹3 lakh/day purchase",
+        "EazyDiner Dining Delights at partner restaurants"
+      ]}
+    ],
+    note:"Issuance: ₹200 · Annual: ₹300 · Liberty Salary account holders: fees waived"
+  }
+];
+
+let activeFilter = 'all';
+
+function setFilter(f, el) {
+  activeFilter = f;
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  render();
+}
+
+function toggle(id) {
+  const el = document.getElementById('card-'+id);
+  el.classList.toggle('open');
+}
+
+function render() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  let list = CARDS;
+
+  if (activeFilter === 'cc') list = list.filter(c => c.type === 'cc');
+  else if (activeFilter === 'dc') list = list.filter(c => c.type === 'dc');
+  else if (activeFilter !== 'all') list = list.filter(c => c.tags.includes(activeFilter));
+
+  if (q) {
+    list = list.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      c.bank.toLowerCase().includes(q) ||
+      c.tags.some(t => t.includes(q)) ||
+      c.topline.toLowerCase().includes(q) ||
+      c.sections.some(s => s.items.some(i => i.toLowerCase().replace(/<[^>]+>/g,'').includes(q)))
+    );
+  }
+
+  const container = document.getElementById('cardList');
+  const tips = document.getElementById('tips');
+
+  if (!list.length) {
+    container.innerHTML = '<div class="empty">No cards match your search.</div>';
+    tips.style.display = 'none';
+    return;
+  }
+
+  tips.style.display = q ? 'none' : 'block';
+
+  container.innerHTML = list.map(c => {
+    const sects = c.sections.map(s => `
+      <div class="section">
+        <div class="section-title">${s.title}</div>
+        ${s.items.map(i => `<div class="benefit"><div class="dot" style="background:${c.dot}"></div><div class="benefit-text">${i}</div></div>`).join('')}
+      </div>`).join('');
+
+    const tagHtml = c.tags.map(t => `<span class="tag">${t}</span>`).join('');
+    const noteHtml = c.note ? `<div class="note" style="border-color:${c.dot}">${c.note}</div>` : '';
+
+    return `<div class="card" id="card-${c.id}">
+      <div class="card-head" onclick="toggle(${c.id})">
+        <div class="card-emoji" style="background:${c.emojiColor}">${c.emoji}</div>
+        <div class="card-info">
+          <div class="card-name">${c.name}</div>
+          <div class="card-bank">${c.bank}</div>
+          <div class="card-badges">
+            <span class="badge badge-${c.type}">${c.type === 'cc' ? 'Credit card' : 'Debit card'}</span>
+            <span class="badge badge-star">${c.star}</span>
+          </div>
+        </div>
+        <div class="chevron">⌄</div>
+      </div>
+      <div class="card-body">
+        <div class="tagline">${c.topline}</div>
+        ${sects}
+        <div class="tags">${tagHtml}</div>
+        ${noteHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+render();
+</script>
+</body>
+</html>
